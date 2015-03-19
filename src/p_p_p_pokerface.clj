@@ -41,10 +41,27 @@
           2))))
 
 (defn straight? [hand]
-  nil)
+  (let [card-ranks (sort (map rank hand))
+        increasing-by-one? (fn
+                             [coll]
+                             (every? #{1} (map - (rest coll) coll)))]
+    (if (some #(= 14 %) card-ranks)
+      (let [with-aces (cons 1 card-ranks)]
+        (or (increasing-by-one? (butlast with-aces))
+            (increasing-by-one? (rest with-aces))))
+      (increasing-by-one? card-ranks))))
 
 (defn straight-flush? [hand]
-  nil)
+  (and (flush? hand)
+       (straight? hand)))
+
+(defn high-card? [hand]
+  true)
 
 (defn value [hand]
-  nil)
+  (let [checkers #{[high-card? 0]  [pair? 1]
+                   [two-pairs? 2]  [three-of-a-kind? 3]
+                   [straight? 4]   [flush? 5]
+                   [full-house? 6] [four-of-a-kind? 7]
+                   [straight-flush? 8]}]
+    (apply max (map (fn [[func score]] (if (func hand) score 0)) checkers))))
